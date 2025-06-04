@@ -106,7 +106,7 @@ node deleteAssets.js <csvFile> "" <localFolderPath>
 
 ```csv
 uid,filename,parent_uid
-blt123abc,image1.jpg,folderA
+sdghsgf,image1.jpg,folderA
 ,,folderB  <-- this means folderB is empty
 ```
 
