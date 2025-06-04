@@ -1,0 +1,1 @@
+# cs-assets-cleaner-script
