@@ -8,7 +8,7 @@ This project includes scripts to scan and delete unused assets (remote or local)
 | File              | Description                                                              |
 | ----------------- | ------------------------------------------------------------------------ |
 | `scanRemote.js`   | Scans remote Contentstack assets and finds unused ones and empty folders |
-| `scanLocal.js`    | Scans local assets using `metadata.json` and Contentstack reference API  |
+| `scanLocal.js`    | Scans local assets using `metadata.json` and folders using `folders.json` and Contentstack reference API  |
 | `deleteAssets.js` | Deletes assets (remote or local) using a CSV from scanning               |
 
 ---
@@ -69,6 +69,13 @@ node scanLocal.js <localFolderPath>
     "file_uid1": [{ "uid": "abc123", "filename": "img1.jpg" }],
     "file_uid2": [{ "uid": "def456", "filename": "img2.jpg" }]
   }
+  ```
+
+  * `folder.json` must exist in the folder if want to remove unused folder.
+  * folder format:
+
+  ```
+    [{ "uid": "abc123", "filename": "img1.jpg" }, { "uid": "def456", "filename": "img2.jpg" }],
   ```
 
 #### ✅ Output
