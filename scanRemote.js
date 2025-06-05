@@ -58,10 +58,11 @@ async function listAllFolders(apiKey) {
   while (true) {
     const res = await axios.get(`https://${HOST_NAME}/v3/assets`, {
       headers: { api_key: apiKey, authtoken: CONTENTSTACK_TOKEN, branch: BRANCH },
-      params: { is_dir: true, skip, limit },
+      params: { skip, limit,include_folders: true,is_dir: true },
     });
     const folders = res.data.assets || [];
-    allFolders.push(...folders);
+    const isDir = folders.filter(f => f.is_dir);
+    allFolders.push(...isDir);
     if (folders.length < limit) break;
     skip += limit;
   }
