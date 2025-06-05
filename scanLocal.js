@@ -1,4 +1,3 @@
-// scanLocalWithReferences.js
 const fs = require('fs/promises');
 const path = require('path');
 const axios = require('axios');
@@ -7,7 +6,7 @@ const pLimit = require('p-limit');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const localFolder = process.argv[2];// path till assets folder
+const localFolder = process.argv[2]; // path to assets folder
 const apiKey = process.argv[3];
 
 if (!localFolder || !apiKey) {
@@ -19,7 +18,9 @@ const HOST_NAME = process.env.HOST_NAME || 'api.contentstack.io';
 const CONTENTSTACK_TOKEN = process.env.CONTENTSTACK_TOKEN;
 const BRANCH = process.env.BRANCH || 'main';
 const METADATA_FILE = path.join(localFolder, 'metadata.json');
+const FOLDER_FILE = path.join(localFolder, 'folders.json');
 const OUTPUT_FILE = process.env.OUTPUT_FILE || './local-unused-assets.csv';
+const ENABLE_EMPTY_FOLDER_CHECK = process.env.ENABLE_EMPTY_FOLDER_CHECK || 'true';
 
 async function fetchReferences(uid) {
   try {
@@ -41,8 +42,13 @@ async function fetchReferences(uid) {
 }
 
 async function main() {
-  const raw = await fs.readFile(METADATA_FILE, 'utf-8');
-  const metadata = JSON.parse(raw);
+  const [rawMeta, rawFolders] = await Promise.all([
+    fs.readFile(METADATA_FILE, 'utf-8'),
+    fs.readFile(FOLDER_FILE, 'utf-8'),
+  ]);
+
+  const metadata = JSON.parse(rawMeta);
+  const folders = JSON.parse(rawFolders);
 
   if (typeof metadata !== 'object' || Array.isArray(metadata)) {
     console.error('Expected metadata.json to contain an object of folder -> asset[]');
@@ -51,7 +57,6 @@ async function main() {
 
   const limit = pLimit(10);
   const unusedAssets = [];
-
   const allAssets = [];
 
   // Flatten all assets with folder info
@@ -79,14 +84,30 @@ async function main() {
     )
   );
 
+  // 🔍 Check for empty folders (optional)
+  if (ENABLE_EMPTY_FOLDER_CHECK === 'true') {
+    const folderUids = Array.isArray(folders) ? folders.map(f => f.uid) : [];
+
+    for (const folderUid of folderUids) {
+      const hasAssets = Array.isArray(metadata[folderUid]) && metadata[folderUid].length > 0;
+      if (!hasAssets) {
+        unusedAssets.push({
+          uid: '',
+          filename: '',
+          parent_uid: folderUid,
+        });
+      }
+    }
+  }
+
   if (unusedAssets.length === 0) {
-    console.log('No unused local assets found.');
+    console.log('No unused local assets or empty folders found.');
     return;
   }
 
   const csv = parse(unusedAssets, { fields: ['uid', 'filename', 'parent_uid'] });
   await fs.writeFile(OUTPUT_FILE, csv);
-  console.log(`Saved unused local assets to ${OUTPUT_FILE}`);
+  console.log(`✅ Saved unused local assets${ENABLE_EMPTY_FOLDER_CHECK === 'true' ? ' and empty folders' : ''} to ${OUTPUT_FILE}`);
 }
 
-main().catch((err) => console.error('Scan failed:', err));
+main().catch((err) => console.error('❌ Scan failed:', err));
