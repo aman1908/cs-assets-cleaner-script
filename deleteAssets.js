@@ -59,11 +59,10 @@ async function folderHasAssets(folderUid) {
       },
       params: {
         folder: folderUid,
-        include_count: true,
       },
     });
 
-    const count = res.data.count || 0;
+    const count = res.data.length || 0;
     return count > 0;
   } catch (err) {
     console.warn(`⚠️ Could not check folder ${folderUid}: ${err.message}`);
@@ -96,7 +95,7 @@ async function main() {
   await Promise.all(
     entries.map(async ({ uid, parent_uid }) => {
       const hasAsset = uid && uid.trim() !== '';
-      const hasFolder = parent_uid && parent_uid !== 'root';
+      const hasFolder = parent_uid !== '';
 
       if (hasAsset) {
         await deleteAsset(uid);
